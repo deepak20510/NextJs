@@ -1,19 +1,19 @@
 import axios from "axios";
 
-async function getBlogs() {
+async function getTodos() {
   const response = await axios.get(
     "https://jsonplaceholder.typicode.com/todos",
   );
   return response.data;
 }
 
-export default async function Blogs() {
-  const blogs = await getBlogs();
+export default async function Todos() {
+  const todos = await getTodos();
 
   return (
     <div>
-      {blogs.map((blog: Itodo) => (
-        <Todo key={blog.id} title={blog.title} completed={blog.completed} />
+      {todos.map((todo: Itodo) => (
+        <Todo key={todo.id} title={todo.title} completed={todo.completed} />
       ))}
     </div>
   );
@@ -25,7 +25,12 @@ interface Itodo {
   completed: boolean;
 }
 
-function Todo({ title, completed }: Itodo) {
+interface TodoProps {
+  title: string;
+  completed: boolean;
+}
+
+function Todo({ title, completed }: TodoProps) {
   return (
     <div>
       {title} {completed ? "done!" : "not done"}
