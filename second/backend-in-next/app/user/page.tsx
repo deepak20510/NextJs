@@ -1,18 +1,16 @@
-import axios from "axios"; // Importing Axios library for making HTTP requests
-
 // Function to fetch user data from an API endpoint
 async function getUserData() {
   // Sending a GET request to the API to fetch user details
-  const response = await axios.get(
-    "https://week-13-offline.kirattechnologies.workers.dev/api/v1/user/details",
-  );
+  const response = await fetch("http://localhost:3000/api/v1/user/details");
 
-  // Adding a delay of 5 seconds to simulate a loader effect
-  // Useful when we want to display a loading spinner on the page
-  await new Promise((r) => setTimeout(r, 5000));
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+
+  const data = await response.json();
 
   // Returning the API response data
-  return response.data;
+  return data;
 }
 
 // The main functional component that renders the page
