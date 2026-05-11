@@ -1,4 +1,11 @@
 {
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix authapp run dev",
+    "build": "npm --prefix authapp run build",
+    "start": "npm --prefix authapp run start",
+    "lint": "npm --prefix authapp run lint"
+  },
   "dependencies": {
     "axios": "^1.16.0"
   }

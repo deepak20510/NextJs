@@ -1,13 +1,16 @@
 // Enables the component to use client-side rendering in a Next.js application
 "use client";
 
-import axios from "axios"; // Importing axios for making HTTP requests
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 // Defining the Signin component
 export default function Signup() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
   return (
     // Outer container to center the sign-in form on the screen
     <div className="w-screen h-screen flex justify-center items-center bg-gray-100">
@@ -42,17 +45,48 @@ export default function Signup() {
 
           {/* Submit button to send the sign-in request */}
           <button
-            onClick={() => {
-              // Sending a POST request to the backend API for sign-in
-              axios.post("http://localhost:3000/api/v1/signup", {
-                username,
-                password,
-              });
+            onClick={async () => {
+              setError("");
+
+              if (!username.trim() || !password.trim()) {
+                setError("Username and password are required.");
+                return;
+              }
+
+              setIsSubmitting(true);
+
+              try {
+                const response = await fetch("/api/v1/signup", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    username: username.trim(),
+                    password,
+                  }),
+                });
+
+                const result = (await response.json()) as { error?: string };
+
+                if (!response.ok) {
+                  setError(result.error ?? "Sign up failed.");
+                  return;
+                }
+
+                router.push("/signin");
+              } catch {
+                setError("Unable to connect to the server.");
+              } finally {
+                setIsSubmitting(false);
+              }
             }}
+            disabled={isSubmitting}
             className="w-full bg-blue-500 text-white font-semibold py-2 rounded-lg hover:bg-blue-600 transition duration-300"
           >
-            Sign Up
+            {isSubmitting ? "Signing Up..." : "Sign Up"}
           </button>
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
         </div>
       </div>
     </div>

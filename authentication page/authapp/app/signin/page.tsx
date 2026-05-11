@@ -1,10 +1,16 @@
 // Enables the component to use client-side rendering in a Next.js application
 "use client";
 
-import axios from "axios"; // Importing axios for making HTTP requests
+import { useState } from "react";
 
 // Defining the Signin component
 export default function Signin() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   return (
     // Outer container to center the sign-in form on the screen
     <div className="w-screen h-screen flex justify-center items-center bg-gray-100">
@@ -21,6 +27,9 @@ export default function Signin() {
           <input
             type="text"
             placeholder="Username"
+            onChange={(e) => {
+              setUsername(e.target.value);
+            }}
             className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
@@ -28,19 +37,58 @@ export default function Signin() {
           <input
             type="password"
             placeholder="Password"
+            onChange={(e) => {
+              setPassword(e.target.value);
+            }}
             className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
           {/* Submit button to send the sign-in request */}
           <button
-            onClick={() => {
-              // Sending a POST request to the backend API for sign-in
-              axios.post("http://localhost:3000/api/v1/signin");
+            onClick={async () => {
+              setError("");
+              setSuccess("");
+
+              if (!username.trim() || !password.trim()) {
+                setError("Username and password are required.");
+                return;
+              }
+
+              setIsSubmitting(true);
+
+              try {
+                const response = await fetch("/api/v1/signin", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    username: username.trim(),
+                    password,
+                  }),
+                });
+
+                const result = (await response.json()) as { error?: string; message?: string };
+
+                if (!response.ok) {
+                  setError(result.error ?? "Sign in failed.");
+                  return;
+                }
+
+                setSuccess(result.message ?? "Signed in successfully.");
+              } catch {
+                setError("Unable to connect to the server.");
+              } finally {
+                setIsSubmitting(false);
+              }
             }}
+            disabled={isSubmitting}
             className="w-full bg-blue-500 text-white font-semibold py-2 rounded-lg hover:bg-blue-600 transition duration-300"
           >
-            Sign In
+            {isSubmitting ? "Signing In..." : "Sign In"}
           </button>
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          {success ? <p className="text-sm text-green-600">{success}</p> : null}
         </div>
       </div>
     </div>

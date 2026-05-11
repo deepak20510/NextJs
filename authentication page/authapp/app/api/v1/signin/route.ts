@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@/generated/prisma/index";
-import { hashPassword } from "@/lib/password";
+import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 
 type AuthPayload = {
@@ -21,32 +20,48 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await prisma.user.create({
-      data: {
+    const user = await prisma.user.findUnique({
+      where: {
         username,
-        password: await hashPassword(password),
       },
     });
 
-    return NextResponse.json(
-      {
-        message: "You have been signed up",
-        userId: user.id,
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Signup error:", error);
-
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
+    if (!user) {
       return NextResponse.json(
-        { error: "Username already exists" },
-        { status: 409 }
+        { error: "Invalid username or password" },
+        { status: 401 }
       );
     }
+
+    const passwordCheck = await verifyPassword(password, user.password);
+
+    if (!passwordCheck.isValid) {
+      return NextResponse.json(
+        { error: "Invalid username or password" },
+        { status: 401 }
+      );
+    }
+
+    if (passwordCheck.needsRehash) {
+      await prisma.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          password: await hashPassword(password),
+        },
+      });
+    }
+
+    return NextResponse.json(
+      {
+        message: "You have been signed in",
+        userId: user.id,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Signin error:", error);
 
     if (error instanceof Error) {
       if (error instanceof SyntaxError) {
@@ -63,7 +78,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: "Failed to create user" },
+      { error: "Failed to sign in" },
       { status: 500 }
     );
   }
